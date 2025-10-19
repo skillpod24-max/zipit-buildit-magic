@@ -115,9 +115,9 @@ const SalesOrders = () => {
           <h1 className="text-3xl font-bold">Sales Orders</h1>
           <p className="text-muted-foreground">Track and manage customer orders</p>
         </div>
-        <Button disabled>
+        <Button onClick={() => window.location.href = '/quotations'}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Order
+          Create from Quotation
         </Button>
       </div>
 

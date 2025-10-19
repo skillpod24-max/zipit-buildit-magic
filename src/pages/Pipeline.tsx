@@ -167,7 +167,20 @@ const Pipeline = () => {
     if (!over) return;
 
     const dealId = active.id as string;
-    const newStage = over.id as string;
+    
+    // Extract stage value from over id - it could be the stage value directly or the card container
+    let newStage: string;
+    if (typeof over.id === 'string' && stages.some(s => s.value === over.id)) {
+      newStage = over.id;
+    } else {
+      // If dropped on a deal card, get the stage from that deal
+      const overDeal = deals.find(d => d.id === over.id);
+      if (overDeal) {
+        newStage = overDeal.stage;
+      } else {
+        return;
+      }
+    }
 
     const deal = deals.find(d => d.id === dealId);
     if (!deal || deal.stage === newStage) return;
@@ -380,8 +393,9 @@ const Pipeline = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {dealsByStage.map((stage) => (
-            <SortableContext key={stage.value} items={stage.deals.map(d => d.id)} strategy={verticalListSortingStrategy}>
-              <Card className="flex flex-col" id={stage.value}>
+            <div key={stage.value} data-stage-id={stage.value}>
+              <SortableContext items={stage.deals.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                <Card className="flex flex-col" id={stage.value}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center justify-between">
                     <Badge className={stage.color} variant="outline">
@@ -413,6 +427,7 @@ const Pipeline = () => {
                 </CardContent>
               </Card>
             </SortableContext>
+            </div>
           ))}
         </div>
         <DragOverlay>
