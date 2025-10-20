@@ -13,7 +13,7 @@ interface SalesOrder {
   status: string;
   order_date: string;
   total_amount: number;
-  expected_delivery_date: string | null;
+  delivery_date: string | null;
   customer_id: string | null;
   tax_amount: number;
   discount_amount: number;
@@ -83,7 +83,7 @@ const SalesOrders = () => {
       const invoiceData = {
         invoice_number: order.order_number,
         date: order.order_date,
-        due_date: order.expected_delivery_date,
+        due_date: order.delivery_date,
         customer_name: customerData?.name || "Customer Name",
         customer_email: customerData?.email,
         customer_phone: customerData?.phone,
@@ -92,7 +92,7 @@ const SalesOrders = () => {
           description: item.description,
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price),
-          amount: Number(item.amount),
+          amount: Number(item.line_total),
         })) || [],
         subtotal: Number(order.total_amount) - Number(order.tax_amount) + Number(order.discount_amount),
         tax_amount: Number(order.tax_amount),
@@ -161,8 +161,8 @@ const SalesOrders = () => {
                   </TableCell>
                   <TableCell>{new Date(order.order_date).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    {order.expected_delivery_date
-                      ? new Date(order.expected_delivery_date).toLocaleDateString()
+                    {order.delivery_date
+                      ? new Date(order.delivery_date).toLocaleDateString()
                       : "-"}
                   </TableCell>
                   <TableCell>₹{Number(order.total_amount).toLocaleString()}</TableCell>

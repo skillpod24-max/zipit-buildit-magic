@@ -25,7 +25,6 @@ interface Deal {
   expected_close_date: string | null;
   notes: string | null;
   customer_id: string | null;
-  lead_id: string | null;
 }
 
 interface DraggableDealProps {

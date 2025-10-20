@@ -15,11 +15,12 @@ interface Product {
   id: string;
   name: string;
   sku: string | null;
-  product_type: string;
+  category: string | null;
   description: string | null;
   unit_price: number;
-  quantity_in_stock: number | null;
-  reorder_level: number | null;
+  stock_quantity: number;
+  cost_price: number;
+  active: boolean;
 }
 
 const Products = () => {
@@ -29,11 +30,11 @@ const Products = () => {
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
-    product_type: "goods",
+    category: "",
     description: "",
     unit_price: "",
-    quantity_in_stock: "",
-    reorder_level: "",
+    stock_quantity: "",
+    cost_price: "",
   });
 
   useEffect(() => {
@@ -69,11 +70,11 @@ const Products = () => {
       const { error } = await supabase.from("products").insert([{
         name: formData.name,
         sku: formData.sku || null,
-        product_type: formData.product_type,
+        category: formData.category || null,
         description: formData.description || null,
         unit_price: parseFloat(formData.unit_price),
-        quantity_in_stock: formData.quantity_in_stock ? parseInt(formData.quantity_in_stock) : 0,
-        reorder_level: formData.reorder_level ? parseInt(formData.reorder_level) : 0,
+        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
+        cost_price: formData.cost_price ? parseFloat(formData.cost_price) : 0,
         user_id: user.id,
       }] as any);
 
@@ -84,11 +85,11 @@ const Products = () => {
       setFormData({
         name: "",
         sku: "",
-        product_type: "goods",
+        category: "",
         description: "",
         unit_price: "",
-        quantity_in_stock: "",
-        reorder_level: "",
+        stock_quantity: "",
+        cost_price: "",
       });
       fetchProducts();
     } catch (error: any) {
@@ -134,16 +135,12 @@ const Products = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="product_type">Type</Label>
-                  <Select value={formData.product_type} onValueChange={(value) => setFormData({ ...formData, product_type: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="goods">Goods</SelectItem>
-                      <SelectItem value="service">Service</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="unit_price">Unit Price (₹) *</Label>
@@ -157,21 +154,22 @@ const Products = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="quantity_in_stock">Quantity in Stock</Label>
+                  <Label htmlFor="stock_quantity">Stock Quantity</Label>
                   <Input
-                    id="quantity_in_stock"
+                    id="stock_quantity"
                     type="number"
-                    value={formData.quantity_in_stock}
-                    onChange={(e) => setFormData({ ...formData, quantity_in_stock: e.target.value })}
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reorder_level">Reorder Level</Label>
+                  <Label htmlFor="cost_price">Cost Price (₹)</Label>
                   <Input
-                    id="reorder_level"
+                    id="cost_price"
                     type="number"
-                    value={formData.reorder_level}
-                    onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
+                    step="0.01"
+                    value={formData.cost_price}
+                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
                   />
                 </div>
               </div>
@@ -201,7 +199,7 @@ const Products = () => {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>SKU</TableHead>
-              <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Unit Price</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Status</TableHead>
@@ -229,14 +227,14 @@ const Products = () => {
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.sku || "-"}</TableCell>
-                  <TableCell className="capitalize">{product.product_type}</TableCell>
+                  <TableCell>{product.category || "-"}</TableCell>
                   <TableCell>₹{Number(product.unit_price).toFixed(2)}</TableCell>
-                  <TableCell>{product.quantity_in_stock || 0}</TableCell>
+                  <TableCell>{product.stock_quantity || 0}</TableCell>
                   <TableCell>
-                    {product.quantity_in_stock && product.reorder_level && product.quantity_in_stock <= product.reorder_level ? (
-                      <Badge variant="destructive">Low Stock</Badge>
+                    {product.active ? (
+                      <Badge variant="outline" className="bg-green-100 text-green-800">Active</Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-green-100 text-green-800">In Stock</Badge>
+                      <Badge variant="outline">Inactive</Badge>
                     )}
                   </TableCell>
                 </TableRow>

@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Wallet, Building2 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-interface MonthlyStats {
+interface Stats {
   totalSales: number;
   totalExpenses: number;
   totalIncome: number;
@@ -18,24 +19,36 @@ interface MonthlyStats {
   dailyData: any[];
 }
 
-const MonthlyAnalytics = () => {
-  const [stats, setStats] = useState<MonthlyStats | null>(null);
+const Analytics = () => {
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"monthly" | "daily">("monthly");
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
-    fetchMonthlyStats();
-  }, [selectedMonth]);
+    fetchStats();
+  }, [selectedMonth, selectedDate, viewMode]);
 
-  const fetchMonthlyStats = async () => {
+  const fetchStats = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const startDate = `${selectedMonth}-01`;
-      const endDate = new Date(selectedMonth + "-01");
-      endDate.setMonth(endDate.getMonth() + 1);
-      const endDateStr = endDate.toISOString().split('T')[0];
+      let startDate: string;
+      let endDateStr: string;
+
+      if (viewMode === "daily") {
+        startDate = selectedDate;
+        const endDate = new Date(selectedDate);
+        endDate.setDate(endDate.getDate() + 1);
+        endDateStr = endDate.toISOString().split('T')[0];
+      } else {
+        startDate = `${selectedMonth}-01`;
+        const endDate = new Date(selectedMonth + "-01");
+        endDate.setMonth(endDate.getMonth() + 1);
+        endDateStr = endDate.toISOString().split('T')[0];
+      }
 
       const { data, error } = await supabase
         .from("daily_logs")
@@ -56,13 +69,21 @@ const MonthlyAnalytics = () => {
         const avgCashInHand = data.reduce((sum, log) => sum + Number(log.cash_in_hand), 0) / data.length;
         const avgBankBalance = data.reduce((sum, log) => sum + Number(log.bank_balance), 0) / data.length;
 
-        const dailyData = data.map(log => ({
-          date: new Date(log.log_date).getDate(),
-          sales: Number(log.sales_amount),
-          expenses: Number(log.expense_amount),
-          income: Number(log.income_amount),
-          profit: Number(log.income_amount) - Number(log.expense_amount),
-        }));
+        const dailyData = viewMode === "daily" 
+          ? data.map((log, index) => ({
+              date: `Day ${index + 1}`,
+              sales: Number(log.sales_amount),
+              expenses: Number(log.expense_amount),
+              income: Number(log.income_amount),
+              profit: Number(log.income_amount) - Number(log.expense_amount),
+            }))
+          : data.map(log => ({
+              date: new Date(log.log_date).getDate(),
+              sales: Number(log.sales_amount),
+              expenses: Number(log.expense_amount),
+              income: Number(log.income_amount),
+              profit: Number(log.income_amount) - Number(log.expense_amount),
+            }));
 
         setStats({
           totalSales,
@@ -80,7 +101,7 @@ const MonthlyAnalytics = () => {
         setStats(null);
       }
     } catch (error) {
-      console.error("Error fetching monthly stats:", error);
+      console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
     }
@@ -156,26 +177,46 @@ const MonthlyAnalytics = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Monthly Analytics</h1>
-          <p className="text-muted-foreground">View detailed monthly business insights</p>
+          <h1 className="text-3xl font-bold">Business Analytics</h1>
+          <p className="text-muted-foreground">View detailed business insights</p>
         </div>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 12 }, (_, i) => {
-              const date = new Date();
-              date.setMonth(date.getMonth() - i);
-              const value = date.toISOString().slice(0, 7);
-              return (
-                <SelectItem key={value} value={value}>
-                  {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={viewMode} onValueChange={(value: "monthly" | "daily") => setViewMode(value)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+            </SelectContent>
+          </Select>
+          {viewMode === "monthly" ? (
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const date = new Date();
+                  date.setMonth(date.getMonth() - i);
+                  const value = date.toISOString().slice(0, 7);
+                  return (
+                    <SelectItem key={value} value={value}>
+                      {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-[200px]"
+            />
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -185,7 +226,7 @@ const MonthlyAnalytics = () => {
       ) : !stats ? (
         <Card>
           <CardContent className="pt-6 text-center text-muted-foreground">
-            <p>No data available for this month</p>
+            <p>No data available for this {viewMode === "monthly" ? "month" : "day"}</p>
             <p className="text-sm mt-2">Start adding daily logs to see analytics</p>
           </CardContent>
         </Card>
@@ -269,4 +310,4 @@ const MonthlyAnalytics = () => {
   );
 };
 
-export default MonthlyAnalytics;
+export default Analytics;

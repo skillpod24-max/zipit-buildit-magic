@@ -15,11 +15,11 @@ import { DetailViewDialog, DetailField } from "@/components/DetailViewDialog";
 interface Call {
   id: string;
   title: string;
-  call_type: string;
   status: string;
   scheduled_at: string | null;
-  duration: number | null;
-  outcome: string | null;
+  duration_minutes: number | null;
+  notes: string | null;
+  customer_id: string | null;
 }
 
 const Calls = () => {
@@ -30,7 +30,6 @@ const Calls = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
-    call_type: "outbound",
     status: "scheduled",
     scheduled_at: "",
     notes: "",
@@ -68,7 +67,6 @@ const Calls = () => {
 
       const { error } = await supabase.from("calls").insert([{
         title: formData.title,
-        call_type: formData.call_type,
         status: formData.status,
         scheduled_at: formData.scheduled_at || null,
         notes: formData.notes || null,
@@ -81,7 +79,6 @@ const Calls = () => {
       setOpen(false);
       setFormData({
         title: "",
-        call_type: "outbound",
         status: "scheduled",
         scheduled_at: "",
         notes: "",
@@ -170,33 +167,19 @@ const Calls = () => {
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="call_type">Type</Label>
-                  <Select value={formData.call_type} onValueChange={(value) => setFormData({ ...formData, call_type: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="inbound">Inbound</SelectItem>
-                      <SelectItem value="outbound">Outbound</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="missed">Missed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="missed">Missed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="scheduled_at">Scheduled Time</Label>
@@ -232,7 +215,6 @@ const Calls = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Subject</TableHead>
-              <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Scheduled</TableHead>
               <TableHead>Duration</TableHead>
@@ -260,7 +242,6 @@ const Calls = () => {
               calls.map((call) => (
                 <TableRow key={call.id}>
                   <TableCell className="font-medium">{call.title}</TableCell>
-                  <TableCell className="capitalize">{call.call_type}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Select
                       value={call.status}
@@ -287,7 +268,7 @@ const Calls = () => {
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    {call.duration ? `${call.duration} min` : "-"}
+                    {call.duration_minutes ? `${call.duration_minutes} min` : "-"}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -315,7 +296,6 @@ const Calls = () => {
           title="Call Details"
           fields={[
             { label: "Subject", value: selectedCall.title, type: "text", fieldName: "title" },
-            { label: "Type", value: selectedCall.call_type, type: "text" },
             { 
               label: "Status", 
               value: selectedCall.status, 
@@ -329,8 +309,8 @@ const Calls = () => {
               ]
             },
             { label: "Scheduled", value: selectedCall.scheduled_at || "", type: "datetime", fieldName: "scheduled_at" },
-            { label: "Duration (min)", value: selectedCall.duration, type: "number" },
-            { label: "Outcome", value: selectedCall.outcome },
+            { label: "Duration (min)", value: selectedCall.duration_minutes, type: "number", fieldName: "duration_minutes" },
+            { label: "Notes", value: selectedCall.notes, fieldName: "notes" },
           ]}
           onEdit={handleDetailEdit}
         />

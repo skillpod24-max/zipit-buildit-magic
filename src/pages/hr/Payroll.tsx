@@ -401,6 +401,33 @@ const Payroll = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
+                    <Select
+                      value={record.status}
+                      onValueChange={async (value) => {
+                        try {
+                          const { error } = await supabase
+                            .from("payroll")
+                            .update({ status: value as any })
+                            .eq("id", record.id);
+                          
+                          if (error) throw error;
+                          toast.success("Status updated successfully!");
+                          fetchPayroll();
+                        } catch (error: any) {
+                          toast.error("Error updating status");
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
                     <Button
                       variant="ghost"
                       size="sm"

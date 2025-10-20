@@ -153,7 +153,7 @@ const Quotations = () => {
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unit_price,
-          amount: item.quantity * item.unit_price,
+          line_total: item.quantity * item.unit_price,
         }));
         
         const { error: itemsError } = await supabase.from("quotation_items").insert(items);
@@ -215,7 +215,7 @@ const Quotations = () => {
           description: item.description,
           quantity: Number(item.quantity),
           unit_price: Number(item.unit_price),
-          amount: Number(item.amount),
+          amount: Number(item.line_total),
         })) || [],
         subtotal: Number(quotation.total_amount) - Number(quotation.tax_amount) + Number(quotation.discount_amount),
         tax_amount: Number(quotation.tax_amount),

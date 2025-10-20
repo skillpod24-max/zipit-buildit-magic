@@ -26,7 +26,7 @@ import Attendance from "./pages/hr/Attendance";
 import Leave from "./pages/hr/Leave";
 import Payroll from "./pages/hr/Payroll";
 import DailyLogs from "./pages/DailyLogs";
-import MonthlyAnalytics from "./pages/MonthlyAnalytics";
+import Analytics from "./pages/Analytics";
 import Papers from "./pages/Papers";
 import NotFound from "./pages/NotFound";
 
@@ -60,7 +60,8 @@ const App = () => (
             <Route path="hr/leave" element={<Leave />} />
             <Route path="hr/payroll" element={<Payroll />} />
             <Route path="daily-logs" element={<DailyLogs />} />
-            <Route path="monthly-analytics" element={<MonthlyAnalytics />} />
+            <Route path="monthly-analytics" element={<Analytics />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="papers" element={<Papers />} />
             <Route path="company-settings" element={<CompanySettings />} />
             <Route path="settings" element={<CompanySettings />} />
