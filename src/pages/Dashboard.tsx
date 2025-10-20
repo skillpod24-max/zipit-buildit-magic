@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Target, DollarSign, CheckCircle, TrendingUp, AlertCircle } from "lucide-react";
+import { Users, Target, DollarSign, CheckCircle, TrendingUp, AlertCircle, UserPlus, Phone, FileText, Calendar } from "lucide-react";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 
 interface DashboardStats {
   totalLeads: number;
@@ -17,7 +20,7 @@ interface UpcomingCall {
   id: string;
   title: string;
   scheduled_at: string;
-  call_type: string;
+  status: string;
 }
 
 const Dashboard = () => {
@@ -32,6 +35,7 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [upcomingCalls, setUpcomingCalls] = useState<UpcomingCall[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -55,7 +59,7 @@ const Dashboard = () => {
         supabase.from("customers").select("*", { count: "exact" }).eq("user_id", user.id),
         supabase.from("deals").select("*").eq("user_id", user.id),
         supabase.from("tasks").select("*", { count: "exact" }).eq("user_id", user.id).eq("status", "pending"),
-        supabase.from("calls").select("id, title, scheduled_at, call_type")
+        supabase.from("calls").select("id, title, scheduled_at, status")
           .eq("user_id", user.id)
           .gte("scheduled_at", new Date().toISOString())
           .order("scheduled_at", { ascending: true })
@@ -75,6 +79,34 @@ const Dashboard = () => {
       });
       
       setUpcomingCalls(calls.data || []);
+
+      // Fetch recent activities
+      const activities = [];
+      if (leads.data && leads.data.length > 0) {
+        leads.data.slice(0, 3).forEach(lead => {
+          activities.push({
+            id: lead.id,
+            type: "lead",
+            description: `New lead: ${lead.name}`,
+            time: new Date(lead.created_at).toLocaleString(),
+            status: lead.status
+          });
+        });
+      }
+      if (deals.data && deals.data.length > 0) {
+        deals.data.slice(0, 2).forEach(deal => {
+          activities.push({
+            id: deal.id,
+            type: "deal",
+            description: `Deal updated: ${deal.title}`,
+            time: new Date(deal.updated_at).toLocaleString(),
+            status: deal.stage
+          });
+        });
+      }
+      setRecentActivities(activities.sort((a, b) => 
+        new Date(b.time).getTime() - new Date(a.time).getTime()
+      ).slice(0, 5));
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
@@ -82,48 +114,26 @@ const Dashboard = () => {
     }
   };
 
-  const statCards = [
+  const quickActions = [
     {
-      title: "Total Leads",
-      value: stats.totalLeads,
+      label: "Add New Lead",
       icon: Target,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
+      onClick: () => navigate("/dashboard/leads"),
     },
     {
-      title: "Customers",
-      value: stats.totalCustomers,
-      icon: Users,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      label: "Create Customer",
+      icon: UserPlus,
+      onClick: () => navigate("/dashboard/customers"),
     },
     {
-      title: "Active Deals",
-      value: stats.totalDeals,
-      icon: TrendingUp,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
+      label: "Schedule Call",
+      icon: Phone,
+      onClick: () => navigate("/dashboard/calls"),
     },
     {
-      title: "Won Deals",
-      value: stats.wonDeals,
-      icon: CheckCircle,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Total Revenue",
-      value: `₹${stats.totalRevenue.toLocaleString()}`,
-      icon: DollarSign,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-    },
-    {
-      title: "Pending Tasks",
-      value: stats.pendingTasks,
-      icon: AlertCircle,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
+      label: "New Quotation",
+      icon: FileText,
+      onClick: () => navigate("/dashboard/quotations"),
     },
   ];
 
@@ -137,76 +147,81 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your sales overview</p>
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background p-6 rounded-lg border">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          Dashboard
+        </h1>
+        <p className="text-muted-foreground mt-1">Welcome back! Here's your business overview</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-              <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                <card.icon className={`h-4 w-4 ${card.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{card.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+        <StatCard
+          title="Total Leads"
+          value={stats.totalLeads}
+          icon={Target}
+          trend={{ value: 12, label: "from last month" }}
+        />
+        <StatCard
+          title="Customers"
+          value={stats.totalCustomers}
+          icon={Users}
+          trend={{ value: 8, label: "from last month" }}
+        />
+        <StatCard
+          title="Active Deals"
+          value={stats.totalDeals}
+          icon={TrendingUp}
+          trend={{ value: 15, label: "from last month" }}
+        />
+        <StatCard
+          title="Won Deals"
+          value={stats.wonDeals}
+          icon={CheckCircle}
+          trend={{ value: 20, label: "from last month" }}
+        />
+        <StatCard
+          title="Total Revenue"
+          value={`₹${stats.totalRevenue.toLocaleString()}`}
+          icon={DollarSign}
+          trend={{ value: 25, label: "from last month" }}
+        />
+        <StatCard
+          title="Pending Tasks"
+          value={stats.pendingTasks}
+          icon={AlertCircle}
+          trend={{ value: -5, label: "from last week" }}
+        />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <button
-              onClick={() => navigate("/dashboard/leads")}
-              className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors"
-            >
-              <div className="font-medium">Add New Lead</div>
-              <div className="text-sm text-muted-foreground">Create a new lead entry</div>
-            </button>
-            <button
-              onClick={() => navigate("/dashboard/customers")}
-              className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors"
-            >
-              <div className="font-medium">Add New Customer</div>
-              <div className="text-sm text-muted-foreground">Register a new customer</div>
-            </button>
-            <button
-              onClick={() => navigate("/dashboard/tasks")}
-              className="w-full text-left p-3 rounded-lg border hover:bg-accent transition-colors"
-            >
-              <div className="font-medium">Create Task</div>
-              <div className="text-sm text-muted-foreground">Add a new follow-up task</div>
-            </button>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <QuickActions actions={quickActions} />
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Meetings & Calls</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Upcoming Meetings & Calls
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {upcomingCalls.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No upcoming calls scheduled</p>
+              <p className="text-sm text-muted-foreground text-center py-8">No upcoming calls scheduled</p>
             ) : (
               upcomingCalls.map((call) => (
-                <div key={call.id} className="p-3 border rounded-lg">
+                <div key={call.id} className="p-3 border rounded-lg hover:bg-accent/50 transition-colors">
                   <div className="font-medium text-sm">{call.title}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(call.scheduled_at).toLocaleString()} - {call.call_type}
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(call.scheduled_at).toLocaleString()}
                   </div>
+                  <div className="text-xs text-primary mt-1 capitalize">{call.status}</div>
                 </div>
               ))
             )}
           </CardContent>
         </Card>
+
+        <RecentActivity activities={recentActivities} />
       </div>
     </div>
   );

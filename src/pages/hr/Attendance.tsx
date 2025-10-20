@@ -14,7 +14,7 @@ import { Plus, Calendar } from "lucide-react";
 interface AttendanceRecord {
   id: string;
   employee_id: string;
-  date: string;
+  attendance_date: string;
   check_in: string | null;
   check_out: string | null;
   status: string;
@@ -32,9 +32,10 @@ const Attendance = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [formData, setFormData] = useState({
     employee_id: "",
-    date: new Date().toISOString().split('T')[0],
+    attendance_date: new Date().toISOString().split('T')[0],
     check_in: "",
     check_out: "",
     status: "present",
@@ -44,7 +45,7 @@ const Attendance = () => {
   useEffect(() => {
     fetchAttendance();
     fetchEmployees();
-  }, []);
+  }, [selectedDate]);
 
   const fetchAttendance = async () => {
     try {
@@ -55,7 +56,8 @@ const Attendance = () => {
         .from("attendance")
         .select("*")
         .eq("user_id", user.id)
-        .order("date", { ascending: false });
+        .eq("attendance_date", selectedDate)
+        .order("attendance_date", { ascending: false });
 
       if (error) throw error;
       setAttendance(data || []);
@@ -92,7 +94,7 @@ const Attendance = () => {
 
       const { error } = await supabase.from("attendance").insert([{
         employee_id: formData.employee_id,
-        date: formData.date,
+        attendance_date: formData.attendance_date,
         check_in: formData.check_in || null,
         check_out: formData.check_out || null,
         status: formData.status,
@@ -106,7 +108,7 @@ const Attendance = () => {
       setOpen(false);
       setFormData({
         employee_id: "",
-        date: new Date().toISOString().split('T')[0],
+        attendance_date: new Date().toISOString().split('T')[0],
         check_in: "",
         check_out: "",
         status: "present",
@@ -140,7 +142,18 @@ const Attendance = () => {
           <h1 className="text-3xl font-bold">Attendance</h1>
           <p className="text-muted-foreground">Track employee attendance</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex gap-3 items-center">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="date-filter">Date:</Label>
+            <Input
+              id="date-filter"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-40"
+            />
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -169,12 +182,12 @@ const Attendance = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date *</Label>
+                  <Label htmlFor="attendance_date">Date *</Label>
                   <Input
-                    id="date"
+                    id="attendance_date"
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    value={formData.attendance_date}
+                    onChange={(e) => setFormData({ ...formData, attendance_date: e.target.value })}
                     required
                   />
                 </div>
@@ -231,6 +244,7 @@ const Attendance = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="border rounded-lg">
@@ -262,7 +276,7 @@ const Attendance = () => {
               attendance.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{getEmployeeName(record.employee_id)}</TableCell>
-                  <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(record.attendance_date).toLocaleDateString()}</TableCell>
                   <TableCell>{record.check_in || "-"}</TableCell>
                   <TableCell>{record.check_out || "-"}</TableCell>
                   <TableCell>
