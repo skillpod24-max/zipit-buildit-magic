@@ -725,6 +725,7 @@ export type Database = {
       products: {
         Row: {
           active: boolean | null
+          catalogue: string | null
           category: string | null
           cost_price: number | null
           created_at: string | null
@@ -739,6 +740,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          catalogue?: string | null
           category?: string | null
           cost_price?: number | null
           created_at?: string | null
@@ -753,6 +755,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          catalogue?: string | null
           category?: string | null
           cost_price?: number | null
           created_at?: string | null

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PriceBookProductsDialog } from "@/components/PriceBookProductsDialog";
 
 interface PriceBook {
   id: string;
@@ -23,6 +24,8 @@ const PriceBooks = () => {
   const [priceBooks, setPriceBooks] = useState<PriceBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [productsDialogOpen, setProductsDialogOpen] = useState(false);
+  const [selectedPriceBook, setSelectedPriceBook] = useState<{ id: string; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -166,7 +169,14 @@ const PriceBooks = () => {
               </TableRow>
             ) : (
               priceBooks.map((priceBook) => (
-                <TableRow key={priceBook.id}>
+                <TableRow 
+                  key={priceBook.id}
+                  className="cursor-pointer hover:bg-accent/50"
+                  onClick={() => {
+                    setSelectedPriceBook({ id: priceBook.id, name: priceBook.name });
+                    setProductsDialogOpen(true);
+                  }}
+                >
                   <TableCell className="font-medium">{priceBook.name}</TableCell>
                   <TableCell>{priceBook.description || "-"}</TableCell>
                   <TableCell>
@@ -183,6 +193,13 @@ const PriceBooks = () => {
           </TableBody>
         </Table>
       </div>
+
+      <PriceBookProductsDialog
+        open={productsDialogOpen}
+        onOpenChange={setProductsDialogOpen}
+        priceBookId={selectedPriceBook?.id || null}
+        priceBookName={selectedPriceBook?.name || ""}
+      />
     </div>
   );
 };

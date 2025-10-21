@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, FileText, Download, Trash2 } from "lucide-react";
+import { Plus, FileText, Download, Trash2, Eye } from "lucide-react";
 
 interface Paper {
   id: string;
@@ -21,6 +21,8 @@ const Papers = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewingFile, setViewingFile] = useState<{ url: string; type: string; name: string } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     file: null as File | null,
@@ -111,6 +113,22 @@ const Papers = () => {
       URL.revokeObjectURL(url);
     } catch (error: any) {
       toast.error("Error downloading document");
+    }
+  };
+
+  const handleView = async (paper: Paper) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("papers")
+        .download(paper.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setViewingFile({ url, type: paper.file_type, name: paper.name });
+      setViewerOpen(true);
+    } catch (error: any) {
+      toast.error("Error loading document");
     }
   };
 
@@ -224,14 +242,30 @@ const Papers = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownload(paper)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleView(paper);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(paper);
+                        }}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(paper)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(paper);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -243,6 +277,40 @@ const Papers = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* File Viewer Dialog */}
+      <Dialog open={viewerOpen} onOpenChange={(open) => {
+        setViewerOpen(open);
+        if (!open && viewingFile) {
+          URL.revokeObjectURL(viewingFile.url);
+          setViewingFile(null);
+        }
+      }}>
+        <DialogContent className="max-w-5xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{viewingFile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {viewingFile?.type.includes('pdf') ? (
+              <iframe
+                src={viewingFile.url}
+                className="w-full h-full border-0"
+                title={viewingFile.name}
+              />
+            ) : viewingFile?.type.includes('image') ? (
+              <img
+                src={viewingFile.url}
+                alt={viewingFile.name}
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p>Preview not available for this file type</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

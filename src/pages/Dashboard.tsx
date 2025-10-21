@@ -6,6 +6,7 @@ import { Users, Target, DollarSign, CheckCircle, TrendingUp, AlertCircle, UserPl
 import { StatCard } from "@/components/dashboard/StatCard";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { PendingTasks } from "@/components/dashboard/PendingTasks";
 
 interface DashboardStats {
   totalLeads: number;
@@ -221,7 +222,25 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <RecentActivity activities={recentActivities} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Tasks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PendingTasks />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-1">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecentActivity activities={recentActivities} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

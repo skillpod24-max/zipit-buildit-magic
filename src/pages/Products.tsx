@@ -31,6 +31,7 @@ const Products = () => {
     name: "",
     sku: "",
     category: "",
+    catalogue: "",
     description: "",
     unit_price: "",
     stock_quantity: "",
@@ -71,6 +72,7 @@ const Products = () => {
         name: formData.name,
         sku: formData.sku || null,
         category: formData.category || null,
+        catalogue: formData.catalogue || null,
         description: formData.description || null,
         unit_price: parseFloat(formData.unit_price),
         stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
@@ -86,6 +88,7 @@ const Products = () => {
         name: "",
         sku: "",
         category: "",
+        catalogue: "",
         description: "",
         unit_price: "",
         stock_quantity: "",
@@ -134,14 +137,23 @@ const Products = () => {
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Input
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="catalogue">Catalogue</Label>
+                <Input
+                  id="catalogue"
+                  value={formData.catalogue}
+                  onChange={(e) => setFormData({ ...formData, catalogue: e.target.value })}
+                  placeholder="e.g., Summer 2024"
+                />
+              </div>
                 <div className="space-y-2">
                   <Label htmlFor="unit_price">Unit Price (₹) *</Label>
                   <Input

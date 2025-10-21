@@ -177,118 +177,147 @@ const DailyLogs = () => {
           <DialogHeader>
             <DialogTitle>{editingLog ? "Edit Daily Log" : "Add Daily Log"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="log_date">Date</Label>
-                <Input
-                  id="log_date"
-                  type="date"
-                  value={formData.log_date}
-                  onChange={(e) => setFormData({ ...formData, log_date: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="opening_stock">Opening Stock (₹)</Label>
-                <Input
-                  id="opening_stock"
-                  type="number"
-                  step="0.01"
-                  value={formData.opening_stock}
-                  onChange={(e) => setFormData({ ...formData, opening_stock: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="closing_stock">Closing Stock (₹)</Label>
-                <Input
-                  id="closing_stock"
-                  type="number"
-                  step="0.01"
-                  value={formData.closing_stock}
-                  onChange={(e) => setFormData({ ...formData, closing_stock: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sales_amount">Sales Amount (₹)</Label>
-                <Input
-                  id="sales_amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.sales_amount}
-                  onChange={(e) => setFormData({ ...formData, sales_amount: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expense_amount">Expense Amount (₹)</Label>
-                <Input
-                  id="expense_amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.expense_amount}
-                  onChange={(e) => setFormData({ ...formData, expense_amount: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="income_amount">Income Amount (₹)</Label>
-                <Input
-                  id="income_amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.income_amount}
-                  onChange={(e) => setFormData({ ...formData, income_amount: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="number_of_sales">Number of Sales</Label>
-                <Input
-                  id="number_of_sales"
-                  type="number"
-                  value={formData.number_of_sales}
-                  onChange={(e) => setFormData({ ...formData, number_of_sales: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="number_of_purchases">Number of Purchases</Label>
-                <Input
-                  id="number_of_purchases"
-                  type="number"
-                  value={formData.number_of_purchases}
-                  onChange={(e) => setFormData({ ...formData, number_of_purchases: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cash_in_hand">Cash in Hand (₹)</Label>
-                <Input
-                  id="cash_in_hand"
-                  type="number"
-                  step="0.01"
-                  value={formData.cash_in_hand}
-                  onChange={(e) => setFormData({ ...formData, cash_in_hand: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bank_balance">Bank Balance (₹)</Label>
-                <Input
-                  id="bank_balance"
-                  type="number"
-                  step="0.01"
-                  value={formData.bank_balance}
-                  onChange={(e) => setFormData({ ...formData, bank_balance: e.target.value })}
-                  placeholder="0.00"
-                />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Date */}
+            <div className="space-y-2">
+              <Label htmlFor="log_date" className="text-base font-semibold">Date *</Label>
+              <Input
+                id="log_date"
+                type="date"
+                value={formData.log_date}
+                onChange={(e) => setFormData({ ...formData, log_date: e.target.value })}
+                required
+              />
+            </div>
+
+            {/* Stock Information */}
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold border-b pb-2">Stock Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="opening_stock">Opening Stock Value (₹)</Label>
+                  <Input
+                    id="opening_stock"
+                    type="number"
+                    step="0.01"
+                    value={formData.opening_stock}
+                    onChange={(e) => setFormData({ ...formData, opening_stock: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="closing_stock">Closing Stock Value (₹)</Label>
+                  <Input
+                    id="closing_stock"
+                    type="number"
+                    step="0.01"
+                    value={formData.closing_stock}
+                    onChange={(e) => setFormData({ ...formData, closing_stock: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
             </div>
+
+            {/* Sales & Revenue */}
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold border-b pb-2">Sales & Revenue</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sales_amount">Total Sales Amount (₹)</Label>
+                  <Input
+                    id="sales_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.sales_amount}
+                    onChange={(e) => setFormData({ ...formData, sales_amount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="number_of_sales">Number of Sales Transactions</Label>
+                  <Input
+                    id="number_of_sales"
+                    type="number"
+                    value={formData.number_of_sales}
+                    onChange={(e) => setFormData({ ...formData, number_of_sales: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="income_amount">Total Income/Revenue (₹)</Label>
+                  <Input
+                    id="income_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.income_amount}
+                    onChange={(e) => setFormData({ ...formData, income_amount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Expenses & Purchases */}
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold border-b pb-2">Expenses & Purchases</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="expense_amount">Total Expenses (₹)</Label>
+                  <Input
+                    id="expense_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.expense_amount}
+                    onChange={(e) => setFormData({ ...formData, expense_amount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="number_of_purchases">Number of Purchase Transactions</Label>
+                  <Input
+                    id="number_of_purchases"
+                    type="number"
+                    value={formData.number_of_purchases}
+                    onChange={(e) => setFormData({ ...formData, number_of_purchases: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cash & Banking */}
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold border-b pb-2">Cash & Banking</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cash_in_hand">Cash in Hand (₹)</Label>
+                  <Input
+                    id="cash_in_hand"
+                    type="number"
+                    step="0.01"
+                    value={formData.cash_in_hand}
+                    onChange={(e) => setFormData({ ...formData, cash_in_hand: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bank_balance">Bank Balance (₹)</Label>
+                  <Input
+                    id="bank_balance"
+                    type="number"
+                    step="0.01"
+                    value={formData.bank_balance}
+                    onChange={(e) => setFormData({ ...formData, bank_balance: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">Additional Notes</Label>
               <Textarea
                 id="notes"
                 value={formData.notes}

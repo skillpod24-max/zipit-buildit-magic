@@ -166,23 +166,25 @@ const Pipeline = () => {
     if (!over) return;
 
     const dealId = active.id as string;
+    const deal = deals.find(d => d.id === dealId);
+    if (!deal) return;
     
-    // Extract stage value from over id - it could be the stage value directly or the card container
-    let newStage: string;
-    if (typeof over.id === 'string' && stages.some(s => s.value === over.id)) {
-      newStage = over.id;
+    // Extract stage from the over element
+    let newStage: string | null = null;
+    
+    // Check if dropped directly on a stage column
+    const stageElement = document.querySelector(`[data-stage-id="${over.id}"]`);
+    if (stageElement) {
+      newStage = over.id as string;
     } else {
-      // If dropped on a deal card, get the stage from that deal
+      // If dropped on a deal, find its parent stage
       const overDeal = deals.find(d => d.id === over.id);
       if (overDeal) {
         newStage = overDeal.stage;
-      } else {
-        return;
       }
     }
 
-    const deal = deals.find(d => d.id === dealId);
-    if (!deal || deal.stage === newStage) return;
+    if (!newStage || deal.stage === newStage) return;
 
     // Validate stage value
     const validStages = ["enquiry", "proposal", "negotiation", "closed_won", "closed_lost"];
@@ -197,10 +199,10 @@ const Pipeline = () => {
       if (error) throw error;
 
       setDeals(prevDeals =>
-        prevDeals.map(d => d.id === dealId ? { ...d, stage: newStage } : d)
+        prevDeals.map(d => d.id === dealId ? { ...d, stage: newStage as string } : d)
       );
 
-      toast.success("Deal moved successfully!");
+      toast.success(`Deal moved to ${stages.find(s => s.value === newStage)?.label}!`);
     } catch (error: any) {
       toast.error("Error moving deal");
     }
@@ -392,8 +394,8 @@ const Pipeline = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {dealsByStage.map((stage) => (
-            <div key={stage.value} data-stage-id={stage.value}>
-              <SortableContext items={stage.deals.map(d => d.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext key={stage.value} items={[stage.value, ...stage.deals.map(d => d.id)]} strategy={verticalListSortingStrategy}>
+              <div data-stage-id={stage.value}>
                 <Card className="flex flex-col" id={stage.value}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center justify-between">
@@ -425,8 +427,8 @@ const Pipeline = () => {
                   )}
                 </CardContent>
               </Card>
+              </div>
             </SortableContext>
-            </div>
           ))}
         </div>
         <DragOverlay>
