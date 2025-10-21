@@ -27,6 +27,10 @@ const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [catalogueDialogOpen, setCatalogueDialogOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [catalogues, setCatalogues] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -40,6 +44,8 @@ const Products = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
+    fetchCatalogues();
   }, []);
 
   const fetchProducts = async () => {
@@ -59,6 +65,38 @@ const Products = () => {
       toast.error("Error fetching products");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("product_categories")
+        .select("name")
+        .eq("user_id", user.id)
+        .order("name");
+      if (error) throw error;
+      setCategories((data || []).map((c: any) => c.name));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchCatalogues = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("product_catalogues")
+        .select("name")
+        .eq("user_id", user.id)
+        .order("name");
+      if (error) throw error;
+      setCatalogues((data || []).map((c: any) => c.name));
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -107,7 +145,11 @@ const Products = () => {
           <h1 className="text-3xl font-bold">Products</h1>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCategoryDialogOpen(true)}>
+            Create Category
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -139,20 +181,32 @@ const Products = () => {
                 </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                />
+                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="catalogue">Catalogue</Label>
-                <Input
-                  id="catalogue"
-                  value={formData.catalogue}
-                  onChange={(e) => setFormData({ ...formData, catalogue: e.target.value })}
-                  placeholder="e.g., Summer 2024"
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="catalogue">Catalogue</Label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setCatalogueDialogOpen(true)}>New</Button>
+                </div>
+                <Select value={formData.catalogue} onValueChange={(v) => setFormData({ ...formData, catalogue: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select catalogue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalogues.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
                 <div className="space-y-2">
                   <Label htmlFor="unit_price">Unit Price (₹) *</Label>
@@ -199,6 +253,70 @@ const Products = () => {
                   Cancel
                 </Button>
                 <Button type="submit">Create Product</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Category</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const name = (document.getElementById('new_category_name') as HTMLInputElement).value.trim();
+              if (!name) return;
+              try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const { error } = await supabase.from('product_categories').insert({ name, user_id: user.id } as any);
+                if (error) throw error;
+                toast.success('Category created');
+                setCategoryDialogOpen(false);
+                fetchCategories();
+              } catch (err) {
+                toast.error('Error creating category');
+              }
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new_category_name">Category Name</Label>
+                <Input id="new_category_name" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setCategoryDialogOpen(false)}>Cancel</Button>
+                <Button type="submit">Create</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={catalogueDialogOpen} onOpenChange={setCatalogueDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Catalogue</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const name = (document.getElementById('new_catalogue_name') as HTMLInputElement).value.trim();
+              if (!name) return;
+              try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const { error } = await supabase.from('product_catalogues').insert({ name, user_id: user.id } as any);
+                if (error) throw error;
+                toast.success('Catalogue created');
+                setCatalogueDialogOpen(false);
+                fetchCatalogues();
+              } catch (err) {
+                toast.error('Error creating catalogue');
+              }
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new_catalogue_name">Catalogue Name</Label>
+                <Input id="new_catalogue_name" />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setCatalogueDialogOpen(false)}>Cancel</Button>
+                <Button type="submit">Create</Button>
               </div>
             </form>
           </DialogContent>

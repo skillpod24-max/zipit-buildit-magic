@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, IndianRupee, FileText } from "lucide-react";
-import { DndContext, DragEndEvent, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -61,6 +61,16 @@ const DraggableDeal = ({ deal, onClick }: DraggableDealProps) => {
           {deal.probability}% probability
         </div>
       )}
+    </div>
+  );
+};
+
+// Droppable column wrapper to allow dropping deals into any stage
+const StageColumn = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div data-stage-id={id} ref={setNodeRef} className={isOver ? "bg-accent/20 rounded-lg" : undefined}>
+      {children}
     </div>
   );
 };
@@ -155,7 +165,7 @@ const Pipeline = () => {
     }
   };
 
-  const handleDragStart = (event: DragEndEvent) => {
+  const handleDragStart = (event: DragStartEvent) => {
     setActiveDealId(event.active.id as string);
   };
 
@@ -169,16 +179,13 @@ const Pipeline = () => {
     const deal = deals.find(d => d.id === dealId);
     if (!deal) return;
     
-    // Extract stage from the over element
+    // Determine destination stage from drop target or over deal
     let newStage: string | null = null;
-    
-    // Check if dropped directly on a stage column
-    const stageElement = document.querySelector(`[data-stage-id="${over.id}"]`);
-    if (stageElement) {
-      newStage = over.id as string;
+    const overId = over.id as string;
+    if (stages.some((s) => s.value === overId)) {
+      newStage = overId;
     } else {
-      // If dropped on a deal, find its parent stage
-      const overDeal = deals.find(d => d.id === over.id);
+      const overDeal = deals.find((d) => d.id === overId);
       if (overDeal) {
         newStage = overDeal.stage;
       }
@@ -278,17 +285,18 @@ const Pipeline = () => {
   const activeDeal = activeDealId ? deals.find(d => d.id === activeDealId) : null;
 
   const detailFields: DetailField[] = selectedDeal ? [
-    { label: "Title", value: selectedDeal.title, type: "text" },
+    { label: "Title", value: selectedDeal.title, type: "text", fieldName: "title" },
     { 
       label: "Stage", 
       value: selectedDeal.stage, 
       type: "select",
+      fieldName: "stage",
       selectOptions: stages.map(s => ({ value: s.value, label: s.label }))
     },
-    { label: "Value (₹)", value: selectedDeal.value?.toString() || "", type: "number" },
-    { label: "Probability (%)", value: selectedDeal.probability?.toString() || "", type: "number" },
-    { label: "Expected Close Date", value: selectedDeal.expected_close_date || "", type: "date" },
-    { label: "Notes", value: selectedDeal.notes || "", type: "textarea" },
+    { label: "Value (₹)", value: selectedDeal.value?.toString() || "", type: "number", fieldName: "value" },
+    { label: "Probability (%)", value: selectedDeal.probability?.toString() || "", type: "number", fieldName: "probability" },
+    { label: "Expected Close Date", value: selectedDeal.expected_close_date || "", type: "date", fieldName: "expected_close_date" },
+    { label: "Notes", value: selectedDeal.notes || "", type: "textarea", fieldName: "notes" },
   ] : [];
 
   return (
@@ -394,40 +402,40 @@ const Pipeline = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {dealsByStage.map((stage) => (
-            <SortableContext key={stage.value} items={[stage.value, ...stage.deals.map(d => d.id)]} strategy={verticalListSortingStrategy}>
-              <div data-stage-id={stage.value}>
+            <SortableContext key={stage.value} items={stage.deals.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+              <StageColumn id={stage.value}>
                 <Card className="flex flex-col" id={stage.value}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center justify-between">
-                    <Badge className={stage.color} variant="outline">
-                      {stage.label}
-                    </Badge>
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {stage.deals.length}
-                    </span>
-                  </CardTitle>
-                  <div className="text-sm font-semibold flex items-center gap-1">
-                    <IndianRupee className="h-3 w-3" />
-                    {stage.totalValue.toLocaleString()}
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 space-y-2 min-h-[200px]">
-                  {loading ? (
-                    <p className="text-sm text-muted-foreground">Loading...</p>
-                  ) : stage.deals.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No deals</p>
-                  ) : (
-                    stage.deals.map((deal) => (
-                      <DraggableDeal
-                        key={deal.id}
-                        deal={deal}
-                        onClick={() => handleDealClick(deal)}
-                      />
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-              </div>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between">
+                      <Badge className={stage.color} variant="outline">
+                        {stage.label}
+                      </Badge>
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {stage.deals.length}
+                      </span>
+                    </CardTitle>
+                    <div className="text-sm font-semibold flex items-center gap-1">
+                      <IndianRupee className="h-3 w-3" />
+                      {stage.totalValue.toLocaleString()}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 space-y-2 min-h-[200px]">
+                    {loading ? (
+                      <p className="text-sm text-muted-foreground">Loading...</p>
+                    ) : stage.deals.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No deals</p>
+                    ) : (
+                      stage.deals.map((deal) => (
+                        <DraggableDeal
+                          key={deal.id}
+                          deal={deal}
+                          onClick={() => handleDealClick(deal)}
+                        />
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              </StageColumn>
             </SortableContext>
           ))}
         </div>

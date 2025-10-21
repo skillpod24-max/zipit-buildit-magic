@@ -133,7 +133,23 @@ export const InvoiceTemplate = ({ open, onOpenChange, invoiceData, type = "invoi
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>{type === "invoice" ? "Invoice" : "Quotation"} Preview</DialogTitle>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {type === "quotation" && (
+              <div className="flex items-center gap-2 mr-2">
+                <span className="text-sm text-muted-foreground">Template</span>
+                <select
+                  className="border rounded px-2 py-1 bg-background text-foreground"
+                  onChange={(e) => (document.body.dataset.invoiceTemplate = e.target.value)}
+                  defaultValue={document.body.dataset.invoiceTemplate || "t1"}
+                >
+                  <option value="t1">Classic</option>
+                  <option value="t2">Minimal</option>
+                  <option value="t3">Modern</option>
+                  <option value="t4">Compact</option>
+                  <option value="t5">Elegant</option>
+                </select>
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -158,9 +174,13 @@ export const InvoiceTemplate = ({ open, onOpenChange, invoiceData, type = "invoi
           </div>
         </DialogHeader>
 
-        <div ref={printRef} className="bg-white p-8 space-y-6 text-foreground">
+        <div ref={printRef} className={`bg-white p-8 space-y-6 text-foreground ${
+          (document.body.dataset.invoiceTemplate || "t1") === "t2" ? "" : ""
+        }`}>
           {/* Header */}
-          <div className="flex justify-between items-start border-b pb-6">
+          <div className={`flex justify-between items-start border-b pb-6 ${
+            (document.body.dataset.invoiceTemplate || "t1") === "t3" ? "border-primary" : ""
+          }`}>
             <div>
               {companySettings?.logo_url && (
                 <img src={companySettings.logo_url} alt="Company Logo" className="h-16 mb-2" />

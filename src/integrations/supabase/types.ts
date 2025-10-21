@@ -722,6 +722,48 @@ export type Database = {
         }
         Relationships: []
       }
+      product_catalogues: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean | null
@@ -828,6 +870,7 @@ export type Database = {
         Row: {
           created_at: string | null
           customer_id: string | null
+          deal_id: string | null
           discount_amount: number | null
           id: string
           issue_date: string | null
@@ -845,6 +888,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           customer_id?: string | null
+          deal_id?: string | null
           discount_amount?: number | null
           id?: string
           issue_date?: string | null
@@ -862,6 +906,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           customer_id?: string | null
+          deal_id?: string | null
           discount_amount?: number | null
           id?: string
           issue_date?: string | null
@@ -882,6 +927,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
             referencedColumns: ["id"]
           },
         ]

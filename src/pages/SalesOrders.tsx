@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ShoppingCart, Plus, Eye } from "lucide-react";
 import { InvoiceTemplate } from "@/components/InvoiceTemplate";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SalesOrder {
   id: string;
@@ -25,9 +29,25 @@ const SalesOrders = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    order_number: `SO-${Date.now()}`,
+    customer_id: "",
+    status: "draft",
+    order_date: new Date().toISOString().slice(0,10),
+    delivery_date: "",
+    tax_amount: "0",
+    discount_amount: "0",
+    notes: "",
+  });
+  const [lineItems, setLineItems] = useState([
+    { description: "", quantity: 1, unit_price: 0 }
+  ]);
 
   useEffect(() => {
     fetchOrders();
+    fetchCustomers();
   }, []);
 
   const fetchOrders = async () => {
@@ -47,6 +67,23 @@ const SalesOrders = () => {
       toast.error("Error fetching sales orders");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch (error) {
+      console.error("Error fetching customers", error);
     }
   };
 
@@ -116,12 +153,155 @@ const SalesOrders = () => {
           <p className="text-muted-foreground">Track and manage customer orders</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => window.location.href = '/quotations'}>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Sales Order
           </Button>
         </div>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Sales Order</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) return;
+
+              const subtotal = lineItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+              const tax = parseFloat(formData.tax_amount) || 0;
+              const discount = parseFloat(formData.discount_amount) || 0;
+              const total = subtotal + tax - discount;
+
+              const { data: order, error } = await supabase.from("sales_orders").insert({
+                order_number: formData.order_number,
+                customer_id: formData.customer_id || null,
+                status: formData.status as any,
+                order_date: formData.order_date,
+                delivery_date: formData.delivery_date || null,
+                tax_amount: tax,
+                discount_amount: discount,
+                total_amount: total,
+                notes: formData.notes,
+                user_id: user.id,
+              } as any).select().single();
+
+              if (error) throw error;
+
+              if (order && lineItems.length > 0) {
+                const items = lineItems.map(item => ({
+                  sales_order_id: order.id,
+                  description: item.description,
+                  quantity: item.quantity,
+                  unit_price: item.unit_price,
+                  line_total: item.quantity * item.unit_price,
+                }));
+                const { error: itemsErr } = await supabase.from("sales_order_items").insert(items);
+                if (itemsErr) throw itemsErr;
+              }
+
+              toast.success("Sales order created successfully!");
+              setCreateOpen(false);
+              setFormData({
+                order_number: `SO-${Date.now()}`,
+                customer_id: "",
+                status: "draft",
+                order_date: new Date().toISOString().slice(0,10),
+                delivery_date: "",
+                tax_amount: "0",
+                discount_amount: "0",
+                notes: "",
+              });
+              setLineItems([{ description: "", quantity: 1, unit_price: 0 }]);
+              fetchOrders();
+            } catch (err) {
+              toast.error("Error creating sales order");
+            }
+          }} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="order_number">Order Number *</Label>
+              <Input id="order_number" value={formData.order_number} onChange={(e) => setFormData({ ...formData, order_number: e.target.value })} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer_id">Customer</Label>
+                <Select value={formData.customer_id} onValueChange={(v) => setFormData({ ...formData, customer_id: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="order_date">Order Date</Label>
+                <Input id="order_date" type="date" value={formData.order_date} onChange={(e) => setFormData({ ...formData, order_date: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="delivery_date">Delivery Date</Label>
+                <Input id="delivery_date" type="date" value={formData.delivery_date} onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tax_amount">Tax Amount (₹)</Label>
+                <Input id="tax_amount" type="number" step="0.01" value={formData.tax_amount} onChange={(e) => setFormData({ ...formData, tax_amount: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="discount_amount">Discount Amount (₹)</Label>
+                <Input id="discount_amount" type="number" step="0.01" value={formData.discount_amount} onChange={(e) => setFormData({ ...formData, discount_amount: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Line Items</Label>
+              {lineItems.map((item, index) => (
+                <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-6">
+                    <Input placeholder="Product/Service" value={item.description} onChange={(e) => { const ni=[...lineItems]; ni[index].description=e.target.value; setLineItems(ni); }} required />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" placeholder="Qty" value={item.quantity} onChange={(e) => { const ni=[...lineItems]; ni[index].quantity=parseFloat(e.target.value)||1; setLineItems(ni); }} required />
+                  </div>
+                  <div className="col-span-3">
+                    <Input type="number" step="0.01" placeholder="Price (₹)" value={item.unit_price} onChange={(e) => { const ni=[...lineItems]; ni[index].unit_price=parseFloat(e.target.value)||0; setLineItems(ni); }} required />
+                  </div>
+                  <div className="col-span-1">
+                    {lineItems.length > 1 && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))}>Remove</Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => setLineItems([...lineItems, { description: "", quantity: 1, unit_price: 0 }])}>Add Item</Button>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+              <Button type="submit">Create Order</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="border rounded-lg">
         <Table>

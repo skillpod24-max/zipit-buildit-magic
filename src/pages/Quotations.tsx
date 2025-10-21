@@ -495,7 +495,7 @@ const Quotations = () => {
                   <div className="flex flex-col items-center gap-2">
                     <FileText className="h-12 w-12 text-muted-foreground/50" />
                     <p>No quotations yet</p>
-                    <p className="text-sm">Quotation creation will be available in the next update</p>
+                    <p className="text-sm">Click "Create Quotation" to add your first quotation</p>
                   </div>
                 </TableCell>
               </TableRow>
