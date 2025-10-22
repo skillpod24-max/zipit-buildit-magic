@@ -322,6 +322,7 @@ const Products = () => {
           </DialogContent>
         </Dialog>
       </div>
+      </div>
 
       <div className="border rounded-lg">
         <Table>
