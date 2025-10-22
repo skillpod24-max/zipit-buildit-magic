@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, IndianRupee, FileText } from "lucide-react";
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -67,7 +67,7 @@ const DraggableDeal = ({ deal, onClick }: DraggableDealProps) => {
 
 // Droppable column wrapper to allow dropping deals into any stage
 const StageColumn = ({ id, children }: { id: string; children: React.ReactNode }) => {
-  const { setNodeRef, isOver } = useDroppable({ id });
+  const { setNodeRef, isOver } = useDroppable({ id, data: { stageId: id } });
   return (
     <div data-stage-id={id} ref={setNodeRef} className={isOver ? "bg-accent/20 rounded-lg" : undefined}>
       {children}
@@ -100,10 +100,11 @@ const Pipeline = () => {
   });
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+    useSensor(MouseSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 100, tolerance: 5 },
     })
   );
 
@@ -179,21 +180,20 @@ const Pipeline = () => {
     const deal = deals.find(d => d.id === dealId);
     if (!deal) return;
     
-    // Determine destination stage from drop target or over deal
-    let newStage: string | null = null;
-    const overId = over.id as string;
-    if (stages.some((s) => s.value === overId)) {
-      newStage = overId;
-    } else {
-      const overDeal = deals.find((d) => d.id === overId);
-      if (overDeal) {
-        newStage = overDeal.stage;
+    // Prefer container stage id from droppable data
+    let newStage: string | null = (over.data?.current as any)?.stageId || null;
+    if (!newStage) {
+      const overId = over.id as string;
+      if (stages.some((s) => s.value === overId)) {
+        newStage = overId;
+      } else {
+        const overDeal = deals.find((d) => d.id === overId);
+        if (overDeal) newStage = overDeal.stage;
       }
     }
 
     if (!newStage || deal.stage === newStage) return;
 
-    // Validate stage value
     const validStages = ["enquiry", "proposal", "negotiation", "closed_won", "closed_lost"];
     if (!validStages.includes(newStage)) return;
 
@@ -205,10 +205,7 @@ const Pipeline = () => {
 
       if (error) throw error;
 
-      setDeals(prevDeals =>
-        prevDeals.map(d => d.id === dealId ? { ...d, stage: newStage as string } : d)
-      );
-
+      setDeals(prevDeals => prevDeals.map(d => d.id === dealId ? { ...d, stage: newStage as string } : d));
       toast.success(`Deal moved to ${stages.find(s => s.value === newStage)?.label}!`);
     } catch (error: any) {
       toast.error("Error moving deal");
@@ -396,7 +393,7 @@ const Pipeline = () => {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >

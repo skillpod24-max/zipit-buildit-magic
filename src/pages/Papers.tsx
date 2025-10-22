@@ -286,11 +286,11 @@ const Papers = () => {
           setViewingFile(null);
         }
       }}>
-        <DialogContent className="max-w-5xl h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl h-[85vh] p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>{viewingFile?.name}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
+          <div className="h-[75vh] overflow-hidden px-6 pb-6">
             {viewingFile?.type.includes('pdf') ? (
               <iframe
                 src={viewingFile.url}

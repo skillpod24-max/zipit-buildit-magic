@@ -174,7 +174,7 @@ export const InvoiceTemplate = ({ open, onOpenChange, invoiceData, type = "invoi
           </div>
         </DialogHeader>
 
-        <div ref={printRef} className={`bg-white p-8 space-y-6 text-foreground ${
+        <div ref={printRef} className={`bg-background p-8 space-y-6 text-foreground ${
           (document.body.dataset.invoiceTemplate || "t1") === "t2" ? "" : ""
         }`}>
           {/* Header */}
