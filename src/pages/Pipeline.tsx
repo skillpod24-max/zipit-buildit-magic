@@ -213,7 +213,9 @@ const Pipeline = () => {
   };
 
   const handleDealClick = (deal: Deal) => {
-    setSelectedDeal(deal);
+    // Always get the latest deal data from state
+    const latestDeal = deals.find(d => d.id === deal.id) || deal;
+    setSelectedDeal(latestDeal);
     setDetailOpen(true);
   };
 
@@ -263,8 +265,15 @@ const Pipeline = () => {
 
       if (error) throw error;
 
+      // Update local state immediately
+      setDeals(prevDeals => prevDeals.map(d => 
+        d.id === selectedDeal.id 
+          ? { ...d, ...data, value: data.value ? parseFloat(data.value) : null, probability: data.probability ? parseInt(data.probability) : null }
+          : d
+      ));
+      setSelectedDeal({ ...selectedDeal, ...data, value: data.value ? parseFloat(data.value) : null, probability: data.probability ? parseInt(data.probability) : null });
+
       toast.success("Deal updated successfully!");
-      fetchDeals();
       setDetailOpen(false);
     } catch (error: any) {
       toast.error("Error updating deal");

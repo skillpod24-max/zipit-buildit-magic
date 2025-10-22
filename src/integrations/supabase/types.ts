@@ -125,6 +125,7 @@ export type Database = {
           id: string
           phone: string | null
           postal_code: string | null
+          quotation_template: string | null
           state: string | null
           tax_id: string | null
           updated_at: string | null
@@ -141,6 +142,7 @@ export type Database = {
           id?: string
           phone?: string | null
           postal_code?: string | null
+          quotation_template?: string | null
           state?: string | null
           tax_id?: string | null
           updated_at?: string | null
@@ -157,6 +159,7 @@ export type Database = {
           id?: string
           phone?: string | null
           postal_code?: string | null
+          quotation_template?: string | null
           state?: string | null
           tax_id?: string | null
           updated_at?: string | null
@@ -814,6 +817,7 @@ export type Database = {
       }
       quotation_items: {
         Row: {
+          cgst_amount: number | null
           created_at: string | null
           description: string
           discount_percent: number | null
@@ -822,10 +826,12 @@ export type Database = {
           product_id: string | null
           quantity: number
           quotation_id: string
+          sgst_amount: number | null
           tax_rate: number | null
           unit_price: number
         }
         Insert: {
+          cgst_amount?: number | null
           created_at?: string | null
           description: string
           discount_percent?: number | null
@@ -834,10 +840,12 @@ export type Database = {
           product_id?: string | null
           quantity: number
           quotation_id: string
+          sgst_amount?: number | null
           tax_rate?: number | null
           unit_price: number
         }
         Update: {
+          cgst_amount?: number | null
           created_at?: string | null
           description?: string
           discount_percent?: number | null
@@ -846,6 +854,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number
           quotation_id?: string
+          sgst_amount?: number | null
           tax_rate?: number | null
           unit_price?: number
         }
@@ -868,6 +877,7 @@ export type Database = {
       }
       quotations: {
         Row: {
+          cgst_percent: number | null
           created_at: string | null
           customer_id: string | null
           deal_id: string | null
@@ -876,6 +886,7 @@ export type Database = {
           issue_date: string | null
           notes: string | null
           quotation_number: string
+          sgst_percent: number | null
           status: string | null
           subtotal: number | null
           tax_amount: number | null
@@ -886,6 +897,7 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          cgst_percent?: number | null
           created_at?: string | null
           customer_id?: string | null
           deal_id?: string | null
@@ -894,6 +906,7 @@ export type Database = {
           issue_date?: string | null
           notes?: string | null
           quotation_number: string
+          sgst_percent?: number | null
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -904,6 +917,7 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          cgst_percent?: number | null
           created_at?: string | null
           customer_id?: string | null
           deal_id?: string | null
@@ -912,6 +926,7 @@ export type Database = {
           issue_date?: string | null
           notes?: string | null
           quotation_number?: string
+          sgst_percent?: number | null
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -940,6 +955,7 @@ export type Database = {
       }
       sales_order_items: {
         Row: {
+          cgst_amount: number | null
           created_at: string | null
           description: string
           discount_percent: number | null
@@ -948,10 +964,12 @@ export type Database = {
           product_id: string | null
           quantity: number
           sales_order_id: string
+          sgst_amount: number | null
           tax_rate: number | null
           unit_price: number
         }
         Insert: {
+          cgst_amount?: number | null
           created_at?: string | null
           description: string
           discount_percent?: number | null
@@ -960,10 +978,12 @@ export type Database = {
           product_id?: string | null
           quantity: number
           sales_order_id: string
+          sgst_amount?: number | null
           tax_rate?: number | null
           unit_price: number
         }
         Update: {
+          cgst_amount?: number | null
           created_at?: string | null
           description?: string
           discount_percent?: number | null
@@ -972,6 +992,7 @@ export type Database = {
           product_id?: string | null
           quantity?: number
           sales_order_id?: string
+          sgst_amount?: number | null
           tax_rate?: number | null
           unit_price?: number
         }
@@ -994,6 +1015,7 @@ export type Database = {
       }
       sales_orders: {
         Row: {
+          cgst_percent: number | null
           created_at: string | null
           customer_id: string | null
           delivery_date: string | null
@@ -1004,6 +1026,7 @@ export type Database = {
           order_number: string
           payment_status: string | null
           quotation_id: string | null
+          sgst_percent: number | null
           status: string | null
           subtotal: number | null
           tax_amount: number | null
@@ -1012,6 +1035,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cgst_percent?: number | null
           created_at?: string | null
           customer_id?: string | null
           delivery_date?: string | null
@@ -1022,6 +1046,7 @@ export type Database = {
           order_number: string
           payment_status?: string | null
           quotation_id?: string | null
+          sgst_percent?: number | null
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null
@@ -1030,6 +1055,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cgst_percent?: number | null
           created_at?: string | null
           customer_id?: string | null
           delivery_date?: string | null
@@ -1040,6 +1066,7 @@ export type Database = {
           order_number?: string
           payment_status?: string | null
           quotation_id?: string | null
+          sgst_percent?: number | null
           status?: string | null
           subtotal?: number | null
           tax_amount?: number | null

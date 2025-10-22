@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 const CompanySettings = () => {
@@ -21,6 +22,7 @@ const CompanySettings = () => {
     country: "",
     website: "",
     tax_id: "",
+    quotation_template: "t1",
   });
 
   useEffect(() => {
@@ -52,6 +54,7 @@ const CompanySettings = () => {
           country: data.country || "",
           website: data.website || "",
           tax_id: data.tax_id || "",
+          quotation_template: (data as any).quotation_template || "t1",
         });
       }
     } catch (error: any) {
@@ -198,6 +201,25 @@ const CompanySettings = () => {
                   onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="quotation_template">Quotation Template</Label>
+              <Select 
+                value={formData.quotation_template} 
+                onValueChange={(value) => setFormData({ ...formData, quotation_template: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="t1">Classic Professional</SelectItem>
+                  <SelectItem value="t2">Modern Minimalist</SelectItem>
+                  <SelectItem value="t3">Bold Corporate</SelectItem>
+                  <SelectItem value="t4">Elegant Premium</SelectItem>
+                  <SelectItem value="t5">Creative Vibrant</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end">
