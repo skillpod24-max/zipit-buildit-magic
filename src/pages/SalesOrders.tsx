@@ -37,7 +37,8 @@ const SalesOrders = () => {
     status: "draft",
     order_date: new Date().toISOString().slice(0,10),
     delivery_date: "",
-    tax_amount: "0",
+    cgst_percent: "9",
+    sgst_percent: "9",
     discount_amount: "0",
     notes: "",
   });
@@ -172,9 +173,13 @@ const SalesOrders = () => {
               if (!user) return;
 
               const subtotal = lineItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-              const tax = parseFloat(formData.tax_amount) || 0;
+              const cgstPercent = parseFloat(formData.cgst_percent) || 0;
+              const sgstPercent = parseFloat(formData.sgst_percent) || 0;
+              const cgstAmount = (subtotal * cgstPercent) / 100;
+              const sgstAmount = (subtotal * sgstPercent) / 100;
+              const taxAmount = cgstAmount + sgstAmount;
               const discount = parseFloat(formData.discount_amount) || 0;
-              const total = subtotal + tax - discount;
+              const total = subtotal + taxAmount - discount;
 
               const { data: order, error } = await supabase.from("sales_orders").insert({
                 order_number: formData.order_number,
@@ -182,7 +187,10 @@ const SalesOrders = () => {
                 status: formData.status as any,
                 order_date: formData.order_date,
                 delivery_date: formData.delivery_date || null,
-                tax_amount: tax,
+                cgst_percent: cgstPercent,
+                sgst_percent: sgstPercent,
+                subtotal: subtotal,
+                tax_amount: taxAmount,
                 discount_amount: discount,
                 total_amount: total,
                 notes: formData.notes,
@@ -192,13 +200,21 @@ const SalesOrders = () => {
               if (error) throw error;
 
               if (order && lineItems.length > 0) {
-                const items = lineItems.map(item => ({
-                  sales_order_id: order.id,
-                  description: item.description,
-                  quantity: item.quantity,
-                  unit_price: item.unit_price,
-                  line_total: item.quantity * item.unit_price,
-                }));
+                const items = lineItems.map(item => {
+                  const itemTotal = item.quantity * item.unit_price;
+                  const itemCgst = (itemTotal * cgstPercent) / 100;
+                  const itemSgst = (itemTotal * sgstPercent) / 100;
+                  return {
+                    sales_order_id: order.id,
+                    description: item.description,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                    cgst_amount: itemCgst,
+                    sgst_amount: itemSgst,
+                    line_total: itemTotal + itemCgst + itemSgst,
+                  };
+                });
+                
                 const { error: itemsErr } = await supabase.from("sales_order_items").insert(items);
                 if (itemsErr) throw itemsErr;
               }
@@ -211,7 +227,8 @@ const SalesOrders = () => {
                 status: "draft",
                 order_date: new Date().toISOString().slice(0,10),
                 delivery_date: "",
-                tax_amount: "0",
+                cgst_percent: "9",
+                sgst_percent: "9",
                 discount_amount: "0",
                 notes: "",
               });
