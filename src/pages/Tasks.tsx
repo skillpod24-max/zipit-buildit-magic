@@ -156,12 +156,13 @@ const Tasks = () => {
   };
 
   const detailFields: DetailField[] = selectedTask ? [
-    { label: "Title", value: selectedTask.title, type: "text" },
-    { label: "Description", value: selectedTask.description || "", type: "textarea" },
+    { label: "Title", value: selectedTask.title, type: "text", fieldName: "title" },
+    { label: "Description", value: selectedTask.description || "", type: "textarea", fieldName: "description" },
     { 
       label: "Priority", 
       value: selectedTask.priority, 
       type: "select",
+      fieldName: "priority",
       selectOptions: [
         { value: "low", label: "Low" },
         { value: "medium", label: "Medium" },
@@ -172,6 +173,7 @@ const Tasks = () => {
       label: "Status", 
       value: selectedTask.status, 
       type: "select",
+      fieldName: "status",
       selectOptions: [
         { value: "pending", label: "Pending" },
         { value: "in_progress", label: "In Progress" },
@@ -179,7 +181,7 @@ const Tasks = () => {
         { value: "cancelled", label: "Cancelled" },
       ]
     },
-    { label: "Due Date", value: selectedTask.due_date || "", type: "datetime" },
+    { label: "Due Date", value: selectedTask.due_date || "", type: "datetime", fieldName: "due_date" },
   ] : [];
 
   return (

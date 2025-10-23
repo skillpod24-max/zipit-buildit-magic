@@ -148,11 +148,19 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background p-6 rounded-lg border">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-1">Welcome back! Here's your business overview</p>
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background p-8 rounded-xl border shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Eduvanca CRM
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">Welcome back! Here's your business overview</p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-muted-foreground">Current Date</div>
+            <div className="text-lg font-semibold">{new Date().toLocaleDateString()}</div>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -160,37 +168,37 @@ const Dashboard = () => {
           title="Total Leads"
           value={stats.totalLeads}
           icon={Target}
-          trend={{ value: 12, label: "from last month" }}
+          className="hover:scale-105 transition-transform"
         />
         <StatCard
           title="Customers"
           value={stats.totalCustomers}
           icon={Users}
-          trend={{ value: 8, label: "from last month" }}
+          className="hover:scale-105 transition-transform"
         />
         <StatCard
           title="Active Deals"
           value={stats.totalDeals}
           icon={TrendingUp}
-          trend={{ value: 15, label: "from last month" }}
+          className="hover:scale-105 transition-transform"
         />
         <StatCard
           title="Won Deals"
           value={stats.wonDeals}
           icon={CheckCircle}
-          trend={{ value: 20, label: "from last month" }}
+          className="hover:scale-105 transition-transform"
         />
         <StatCard
           title="Total Revenue"
           value={`₹${stats.totalRevenue.toLocaleString()}`}
           icon={DollarSign}
-          trend={{ value: 25, label: "from last month" }}
+          className="hover:scale-105 transition-transform"
         />
         <StatCard
           title="Pending Tasks"
           value={stats.pendingTasks}
           icon={AlertCircle}
-          trend={{ value: -5, label: "from last week" }}
+          className="hover:scale-105 transition-transform"
         />
       </div>
 

@@ -10,17 +10,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DetailViewDialog, DetailField } from "@/components/DetailViewDialog";
+import { SearchFilter } from "@/components/SearchFilter";
 
 interface Product {
   id: string;
   name: string;
   sku: string | null;
   category: string | null;
+  catalogue: string | null;
   description: string | null;
   unit_price: number;
   stock_quantity: number;
   cost_price: number;
   active: boolean;
+  created_at: string;
 }
 
 const Products = () => {
@@ -31,6 +35,10 @@ const Products = () => {
   const [catalogueDialogOpen, setCatalogueDialogOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [catalogues, setCatalogues] = useState<string[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterField, setFilterField] = useState("name");
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -137,6 +145,88 @@ const Products = () => {
       toast.error("Error creating product");
     }
   };
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setDetailOpen(true);
+  };
+
+  const handleDetailEdit = async (data: Record<string, any>) => {
+    if (!selectedProduct) return;
+
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({
+          name: data.name,
+          sku: data.sku || null,
+          category: data.category || null,
+          catalogue: data.catalogue || null,
+          description: data.description || null,
+          unit_price: parseFloat(data.unit_price),
+          stock_quantity: parseInt(data.stock_quantity) || 0,
+          cost_price: parseFloat(data.cost_price) || 0,
+          active: data.active === "true" || data.active === true,
+        })
+        .eq("id", selectedProduct.id);
+
+      if (error) throw error;
+
+      toast.success("Product updated successfully!");
+      fetchProducts();
+      setDetailOpen(false);
+    } catch (error: any) {
+      toast.error("Error updating product");
+    }
+  };
+
+  const filteredProducts = products.filter(product => {
+    const searchLower = searchTerm.toLowerCase();
+    switch (filterField) {
+      case "name":
+        return product.name.toLowerCase().includes(searchLower);
+      case "sku":
+        return product.sku?.toLowerCase().includes(searchLower) ?? false;
+      case "category":
+        return product.category?.toLowerCase().includes(searchLower) ?? false;
+      default:
+        return true;
+    }
+  });
+
+  const detailFields: DetailField[] = selectedProduct ? [
+    { label: "Name", value: selectedProduct.name, type: "text", fieldName: "name" },
+    { label: "SKU", value: selectedProduct.sku, type: "text", fieldName: "sku" },
+    { 
+      label: "Category", 
+      value: selectedProduct.category, 
+      type: "select", 
+      fieldName: "category",
+      selectOptions: categories.map(c => ({ value: c, label: c }))
+    },
+    { 
+      label: "Catalogue", 
+      value: selectedProduct.catalogue, 
+      type: "select", 
+      fieldName: "catalogue",
+      selectOptions: catalogues.map(c => ({ value: c, label: c }))
+    },
+    { label: "Description", value: selectedProduct.description, type: "textarea", fieldName: "description" },
+    { label: "Unit Price", value: selectedProduct.unit_price, type: "currency", fieldName: "unit_price" },
+    { label: "Stock Quantity", value: selectedProduct.stock_quantity, type: "number", fieldName: "stock_quantity" },
+    { label: "Cost Price", value: selectedProduct.cost_price, type: "currency", fieldName: "cost_price" },
+    { 
+      label: "Status", 
+      value: selectedProduct.active ? "true" : "false", 
+      type: "select", 
+      fieldName: "active",
+      selectOptions: [
+        { value: "true", label: "Active" },
+        { value: "false", label: "Inactive" },
+      ]
+    },
+    { label: "Created", value: selectedProduct.created_at, type: "date" },
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -324,6 +414,19 @@ const Products = () => {
       </div>
       </div>
 
+      <SearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterField={filterField}
+        onFilterFieldChange={setFilterField}
+        filterOptions={[
+          { value: "name", label: "Name" },
+          { value: "sku", label: "SKU" },
+          { value: "category", label: "Category" },
+        ]}
+        placeholder="Search products..."
+      />
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
@@ -343,19 +446,23 @@ const Products = () => {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : products.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                   <div className="flex flex-col items-center gap-2">
                     <Package className="h-12 w-12 text-muted-foreground/50" />
-                    <p>No products yet</p>
+                    <p>No products found</p>
                     <p className="text-sm">Add your first product to get started</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              products.map((product) => (
-                <TableRow key={product.id}>
+              filteredProducts.map((product) => (
+                <TableRow 
+                  key={product.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleProductClick(product)}
+                >
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>{product.sku || "-"}</TableCell>
                   <TableCell>{product.category || "-"}</TableCell>
@@ -374,6 +481,14 @@ const Products = () => {
           </TableBody>
         </Table>
       </div>
+
+      <DetailViewDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        title="Product Details"
+        fields={detailFields}
+        onEdit={handleDetailEdit}
+      />
     </div>
   );
 };

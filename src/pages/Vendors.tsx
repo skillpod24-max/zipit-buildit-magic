@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Plus, Truck } from "lucide-react";
+import { DetailViewDialog, DetailField } from "@/components/DetailViewDialog";
+import { SearchFilter } from "@/components/SearchFilter";
 
 interface Vendor {
   id: string;
@@ -15,14 +17,23 @@ interface Vendor {
   company: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
   city: string | null;
+  state: string | null;
+  postal_code: string | null;
   country: string | null;
+  notes: string | null;
+  created_at: string;
 }
 
 const Vendors = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterField, setFilterField] = useState("name");
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -92,6 +103,71 @@ const Vendors = () => {
       toast.error("Error creating vendor");
     }
   };
+
+  const handleVendorClick = (vendor: Vendor) => {
+    setSelectedVendor(vendor);
+    setDetailOpen(true);
+  };
+
+  const handleDetailEdit = async (data: Record<string, any>) => {
+    if (!selectedVendor) return;
+
+    try {
+      const { error } = await supabase
+        .from("vendors")
+        .update({
+          name: data.name,
+          company: data.company,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          postal_code: data.postal_code,
+          country: data.country,
+          notes: data.notes,
+        })
+        .eq("id", selectedVendor.id);
+
+      if (error) throw error;
+
+      toast.success("Vendor updated successfully!");
+      fetchVendors();
+      setDetailOpen(false);
+    } catch (error: any) {
+      toast.error("Error updating vendor");
+    }
+  };
+
+  const filteredVendors = vendors.filter(vendor => {
+    const searchLower = searchTerm.toLowerCase();
+    switch (filterField) {
+      case "name":
+        return vendor.name.toLowerCase().includes(searchLower);
+      case "company":
+        return vendor.company?.toLowerCase().includes(searchLower) ?? false;
+      case "email":
+        return vendor.email?.toLowerCase().includes(searchLower) ?? false;
+      case "city":
+        return vendor.city?.toLowerCase().includes(searchLower) ?? false;
+      default:
+        return true;
+    }
+  });
+
+  const detailFields: DetailField[] = selectedVendor ? [
+    { label: "Name", value: selectedVendor.name, type: "text", fieldName: "name" },
+    { label: "Company", value: selectedVendor.company, type: "text", fieldName: "company" },
+    { label: "Email", value: selectedVendor.email, type: "text", fieldName: "email" },
+    { label: "Phone", value: selectedVendor.phone, type: "text", fieldName: "phone" },
+    { label: "Address", value: selectedVendor.address, type: "textarea", fieldName: "address" },
+    { label: "City", value: selectedVendor.city, type: "text", fieldName: "city" },
+    { label: "State", value: selectedVendor.state, type: "text", fieldName: "state" },
+    { label: "Postal Code", value: selectedVendor.postal_code, type: "text", fieldName: "postal_code" },
+    { label: "Country", value: selectedVendor.country, type: "text", fieldName: "country" },
+    { label: "Notes", value: selectedVendor.notes, type: "textarea", fieldName: "notes" },
+    { label: "Created", value: selectedVendor.created_at, type: "date" },
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -211,6 +287,20 @@ const Vendors = () => {
         </Dialog>
       </div>
 
+      <SearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterField={filterField}
+        onFilterFieldChange={setFilterField}
+        filterOptions={[
+          { value: "name", label: "Name" },
+          { value: "company", label: "Company" },
+          { value: "email", label: "Email" },
+          { value: "city", label: "City" },
+        ]}
+        placeholder="Search vendors..."
+      />
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
@@ -229,19 +319,23 @@ const Vendors = () => {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : vendors.length === 0 ? (
+            ) : filteredVendors.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
                   <div className="flex flex-col items-center gap-2">
                     <Truck className="h-12 w-12 text-muted-foreground/50" />
-                    <p>No vendors yet</p>
+                    <p>No vendors found</p>
                     <p className="text-sm">Add your first vendor to get started</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              vendors.map((vendor) => (
-                <TableRow key={vendor.id}>
+              filteredVendors.map((vendor) => (
+                <TableRow 
+                  key={vendor.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleVendorClick(vendor)}
+                >
                   <TableCell className="font-medium">{vendor.name}</TableCell>
                   <TableCell>{vendor.company || "-"}</TableCell>
                   <TableCell>{vendor.email || "-"}</TableCell>
@@ -257,6 +351,14 @@ const Vendors = () => {
           </TableBody>
         </Table>
       </div>
+
+      <DetailViewDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        title="Vendor Details"
+        fields={detailFields}
+        onEdit={handleDetailEdit}
+      />
     </div>
   );
 };
